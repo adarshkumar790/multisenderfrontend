@@ -188,7 +188,7 @@ export default function Home() {
                 {getLineNumbers()}
               </pre>
               <textarea
-                placeholder="Insert your CSV here or use the button below..."
+                placeholder="Insert your CSV here"
                 className="w-full bg-[#0F123D] text-white px-4 py-2 rounded-none resize-none h-32"
                 value={csvText}
                 onChange={handleCsvTextChange}
