@@ -13,7 +13,17 @@ export default function Home() {
   const [ethBalance, setEthBalance] = useState("");
 
   const handleFileUpload = (event) => {
-    setCsvFile(event.target.files[0]);
+    const file = event.target.files[0];
+    if (file && file.type === "text/csv") {
+      setCsvFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCsvText(reader.result); // Read the CSV content and set it in the state
+      };
+      reader.readAsText(file);
+    } else {
+      alert("Please upload a valid CSV file.");
+    }
   };
 
   const handleCsvTextChange = (event) => {
