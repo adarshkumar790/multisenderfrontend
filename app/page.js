@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FaCrown, FaEthereum, FaCoins, FaFileCsv } from "react-icons/fa"; // Import additional icons
 import Image from "next/image"; // For MetaMask logo
 import Web3 from "web3";
+import Link from "next/link";
 
 export default function Home() {
   const [csvFile, setCsvFile] = useState(null);
@@ -11,6 +12,7 @@ export default function Home() {
   const [status, setStatus] = useState(1); // 1: Prepare, 2: Approve, 3: Multisend
   const [walletAddress, setWalletAddress] = useState("");
   const [ethBalance, setEthBalance] = useState("");
+  const [csvError, setCsvError] = useState(false); // State to track if there are validation errors
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -19,6 +21,7 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = () => {
         setCsvText(reader.result); // Read the CSV content and set it in the state
+        validateCsv(reader.result); // Validate CSV content after loading
       };
       reader.readAsText(file);
     } else {
@@ -27,7 +30,19 @@ export default function Home() {
   };
 
   const handleCsvTextChange = (event) => {
-    setCsvText(event.target.value);
+    const value = event.target.value;
+    setCsvText(value);
+    validateCsv(value); // Validate CSV content when user types in the field
+  };
+
+  const validateCsv = (csvData) => {
+    const lines = csvData.split("\n");
+    const isValid = lines.every(line => {
+      const [address] = line.split(",").map(item => item.trim());
+      return address && address.length === 42; // Check if address length is exactly 42 (for Ethereum addresses)
+    });
+
+    setCsvError(!isValid); // Set error state based on validation result
   };
 
   const getLineNumbers = () => {
@@ -43,9 +58,24 @@ export default function Home() {
     setShowModal(false);
   };
 
-  const handleContinue = () => {
-    alert("Continuing to the next step!");
+  const parseCsv = () => {
+    const lines = csvText.split("\n");
+    const valid = [];
+    const invalid = [];
+    lines.forEach((line) => {
+      const [address, amount] = line.split(",").map((item) => item.trim());
+      if (address && address.length === 42) {
+        valid.push({ line: line.trim() });
+      } else {
+        invalid.push({ line: line.trim() });
+      }
+    });
+    return { valid, invalid };
   };
+
+  // const handleContinue = () => {
+  //   <Link href="/home">
+  // };
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== "undefined") {
@@ -72,48 +102,11 @@ export default function Home() {
     "0x7D52422D3A5fE9bC92D3aE8167097eE09F1b347d, 1.049",
   ];
 
+  const { valid, invalid } = parseCsv();
+
   return (
-    <div className="min-h-screen bg-[#083344] text-white flex flex-col items-center">
-      {/* Header Section */}
-      <header className="w-full flex justify-between items-center px-6 py-4">
-        <div className="text-2xl font-bold">Ledgerline Multisender</div>
-      </header>
-
-      {/* Responsive Buttons Section */}
-      <div className="w-full flex flex-wrap justify-center gap-3 mt-4 md:mt-6">
-        <div className="flex gap-3 items-center">
-          <button className="text-green-500 bg-[#0F123D]  border border-green-500 text-xs hover:bg-green-900 px-4 font-bold py-2 rounded-xl flex items-center gap-0.5">
-            <FaCrown /> VIP
-          </button>
-          <button className="bg-[#0F123D] border border-blue-500 text-blue-500 text-xs hover:bg-sky-900 font-bold px-3 py-2 rounded-xl flex items-center gap-0.5">
-            <FaEthereum /> Eth
-          </button>
-          {walletAddress ? (
-            <div className="bg-[#0F123D] text-white text-xs border border-blue-500 px-3 py-2 hover:bg-sky-900 rounded-xl flex items-center">
-              <div className="font-bold text-blue-400">
-                {walletAddress.slice(0, 8)}
-              </div>
-              <div className="ml-2 font-bold text-blue-400">
-                {ethBalance.slice(0, 3)} ETH
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={connectWallet}
-              className="bg-[#0F123D] text-blue-500 text-xs border border-blue-500 px-3 hover:bg-sky-900 font-bold py-2 rounded-xl flex items-center gap-0.5"
-            >
-              <Image
-                src="/metamask.png"
-                alt="MetaMask"
-                width={20}
-                height={20}
-              />
-              Connect Wallet
-            </button>
-          )}
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-slate-800 text-white flex flex-col items-center">
+      
       <main className="flex flex-col items-center mt-10 w-full max-w-2xl bg-[#0F123D] rounded-2xl shadow-lg p-6">
         <div className="flex items-center gap-2 mb-6">
           <div
@@ -189,7 +182,7 @@ export default function Home() {
               </pre>
               <textarea
                 placeholder="Insert your CSV here"
-                className="w-full bg-[#0F123D] text-white px-4 py-2 rounded-none resize-none h-32"
+                className={`w-full bg-[#0F123D] text-white px-4 py-2 rounded-none resize-none h-32 ${csvError ? "border-red-500" : "border-gray-500"}`}
                 value={csvText}
                 onChange={handleCsvTextChange}
               />
@@ -211,23 +204,30 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Connect Wallet Button Below CSV */}
+          
           <div className="mt-8">
-            {walletAddress ? (
-              <button
-                onClick={handleContinue}
-                className="bg-green-500 hover:bg-green-600 text-white w-full font-bold py-2 rounded-xl flex items-center justify-center gap-2"
-              >
+          {walletAddress ? (
+            <Link
+              href={{
+                pathname: "/approve",
+                query: {
+                  validAddresses: JSON.stringify(valid),
+                  invalidAddresses: JSON.stringify(invalid),
+                },
+              }}
+            >
+              <button className="bg-green-500 hover:bg-green-600 text-white w-full font-bold py-2 rounded-xl">
                 Continue
               </button>
-            ) : (
-              <button
-                onClick={connectWallet}
-                className="bg-sky-500 hover:bg-sky-600 text-white w-full font-bold py-2 rounded-xl flex items-center justify-center gap-2"
-              >
-                Connect Wallet
-              </button>
-            )}
+            </Link>
+          ) : (
+            <button
+              onClick={connectWallet}
+              className="bg-sky-500 hover:bg-sky-600 text-white w-full font-bold py-2 rounded-xl"
+            >
+              Connect Wallet
+            </button>
+          )}
           </div>
         </div>
       </main>
