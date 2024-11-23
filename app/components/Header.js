@@ -26,7 +26,7 @@ export default function Header() {
   };
 
   return (
-    <header className="w-full bg-slate-800 text-white shadow-md">
+    <header className="w-full bg-gradient-to-r from-[#1e293b] to-[#0F123D] bg-opacity-80 text-white shadow-md">
       <div className="flex flex-wrap justify-between items-center px-4 py-3 md:px-6 lg:px-8">
         {/* Logo Section */}
         <div className="text-2xl font-bold mb-2 sm:mb-0">Ledgerline Multisender</div>
@@ -34,7 +34,7 @@ export default function Header() {
         {/* Buttons Section */}
         <div className="flex flex-wrap justify-center items-center gap-3">
           {/* VIP Button */}
-          <button className="text-green-500 bg-[#0F123D] border border-green-500 text-xs hover:bg-green-900 px-4 font-bold py-2 rounded-xl flex items-center gap-1">
+          <button className="text-green-500  border border-green-500 text-xs hover:bg-green-900 px-4 font-bold py-2 rounded-xl flex items-center gap-1">
             <FaCrown /> VIP
           </button>
 

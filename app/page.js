@@ -1,18 +1,29 @@
 "use client";
-import { useState } from "react";
-import { FaCrown, FaEthereum, FaCoins, FaFileCsv } from "react-icons/fa"; 
-import Image from "next/image"; 
+import { useState, useEffect } from "react";
+import { FaCrown, FaEthereum, FaCoins, FaFileCsv } from "react-icons/fa"; // Import additional icons
+import Image from "next/image"; // For MetaMask logo
 import Web3 from "web3";
 import Link from "next/link";
 
 export default function Home() {
   const [csvFile, setCsvFile] = useState(null);
   const [csvText, setCsvText] = useState("");
+  const [lineNumbers, setLineNumbers] = useState(""); // Line numbers state
   const [showModal, setShowModal] = useState(false);
-  const [status, setStatus] = useState(1); 
+  const [status, setStatus] = useState(1); // 1: Prepare, 2: Approve, 3: Multisend
   const [walletAddress, setWalletAddress] = useState("");
   const [ethBalance, setEthBalance] = useState("");
-  const [csvError, setCsvError] = useState(false); 
+  const [csvError, setCsvError] = useState(false);
+
+  // Update line numbers dynamically whenever csvText changes
+  useEffect(() => {
+    const updateLineNumbers = () => {
+      if (!csvText) return ""; // Handle empty or undefined csvText
+      const lines = csvText.split("\n");
+      return lines.map((_, index) => index + 1).join("\n");
+    };
+    setLineNumbers(updateLineNumbers());
+  }, [csvText]);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -20,8 +31,8 @@ export default function Home() {
       setCsvFile(file);
       const reader = new FileReader();
       reader.onload = () => {
-        setCsvText(reader.result); 
-        validateCsv(reader.result); 
+        setCsvText(reader.result);
+        validateCsv(reader.result);
       };
       reader.readAsText(file);
     } else {
@@ -32,22 +43,17 @@ export default function Home() {
   const handleCsvTextChange = (event) => {
     const value = event.target.value;
     setCsvText(value);
-    validateCsv(value); 
+    validateCsv(value);
   };
 
   const validateCsv = (csvData) => {
     const lines = csvData.split("\n");
-    const isValid = lines.every(line => {
-      const [address] = line.split(",").map(item => item.trim());
+    const isValid = lines.every((line) => {
+      const [address] = line.split(",").map((item) => item.trim());
       return address && address.length === 42;
     });
 
-    setCsvError(!isValid); 
-  };
-
-  const getLineNumbers = () => {
-    const lines = csvText.split("\n");
-    return lines.map((_, index) => index + 1).join("\n");
+    setCsvError(!isValid);
   };
 
   const showCsvFormat = () => {
@@ -65,15 +71,13 @@ export default function Home() {
     lines.forEach((line) => {
       const [address, amount] = line.split(",").map((item) => item.trim());
       if (address && address.length === 42) {
-        valid.push({ line: line.trim() });
+        valid.push({ address, amount });
       } else {
-        invalid.push({ line: line.trim() });
+        invalid.push({ address, amount });
       }
     });
     return { valid, invalid };
   };
-
-  
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== "undefined") {
@@ -103,9 +107,8 @@ export default function Home() {
   const { valid, invalid } = parseCsv();
 
   return (
-    <div className="min-h-screen bg-[#1e293b] text-white flex flex-col items-center">
-      
-      <main className="flex flex-col items-center mt-10 w-full max-w-2xl bg-[#1e293b] rounded-2xl shadow-lg p-6">
+    <div className="min-h-screen bg-gradient-to-r from-[#1e293b] to-[#0F123D] bg-opacity-60 text-white flex flex-col items-center">
+      <main className="flex flex-col items-center mt-10 w-full max-w-2xl bg-gradient-to-r from-[#1e293b] to-[#0F123D] bg-opacity-80 rounded-2xl shadow-lg p-6 bg-opacity-80 backdrop-blur-md">
         <div className="flex items-center gap-2 mb-6">
           <div
             className={`flex items-center gap-2 ${
@@ -135,9 +138,7 @@ export default function Home() {
           <div className="text-xs font-bold text-blue-700">Multisend</div>
         </div>
 
-        {/* Main content */}
-        <div className="w-full border border-gray-500 rounded-lg p-4">
-          {/* Token Address Section */}
+        <div className="w-full bg-gradient-to-r from-[#1e293b] to-[#0F123D] bg-opacity-80 rounded-lg p-4">
           <div className="w-full mb-6">
             <label className="block text-xs font-bold mb-2">Token Address</label>
             <div className="flex items-center gap-2">
@@ -158,7 +159,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* CSV Input Section */}
           <div className="w-full mt-6 relative">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold mb-2">
@@ -176,11 +176,13 @@ export default function Home() {
                 className="bg-[#0F123D] text-gray-500 px-3 py-2 text-right"
                 style={{ minWidth: "2.5rem" }}
               >
-                {getLineNumbers()}
+                {lineNumbers}
               </pre>
               <textarea
                 placeholder="Insert your CSV here"
-                className={`w-full bg-[#0F123D] text-white px-4 py-2 rounded-none resize-none h-32 ${csvError ? "border-red-500" : "border-gray-500"}`}
+                className={`w-full bg-[#0F123D] text-white px-4 py-2 rounded-none resize-none h-32 ${
+                  csvError ? "border-red-500" : "border-gray-500"
+                }`}
                 value={csvText}
                 onChange={handleCsvTextChange}
               />
@@ -202,30 +204,29 @@ export default function Home() {
             </div>
           </div>
 
-          
           <div className="mt-8">
-          {walletAddress ? (
-            <Link
-              href={{
-                pathname: "/approve",
-                query: {
-                  validAddresses: JSON.stringify(valid),
-                  invalidAddresses: JSON.stringify(invalid),
-                },
-              }}
-            >
-              <button className="bg-green-500 hover:bg-green-600 text-white w-full font-bold py-2 rounded-xl">
-                Continue
+            {walletAddress ? (
+              <Link
+                href={{
+                  pathname: "/approve",
+                  query: {
+                    validAddresses: JSON.stringify(valid),
+                    invalidAddresses: JSON.stringify(invalid),
+                  },
+                }}
+              >
+                <button className="bg-green-500 hover:bg-green-600 text-white w-full font-bold py-2 rounded-xl">
+                  Continue
+                </button>
+              </Link>
+            ) : (
+              <button
+                onClick={connectWallet}
+                className="bg-blue-800 hover:bg-blue-600 text-white w-full font-bold py-2 rounded-xl"
+              >
+                Connect Wallet
               </button>
-            </Link>
-          ) : (
-            <button
-              onClick={connectWallet}
-              className="bg-sky-500 hover:bg-sky-600 text-white w-full font-bold py-2 rounded-xl"
-            >
-              Connect Wallet
-            </button>
-          )}
+            )}
           </div>
         </div>
       </main>
@@ -245,10 +246,7 @@ export default function Home() {
               ))}
             </div>
             <div className="mt-4 flex justify-end">
-              <button
-                className="text-red-500 font-bold"
-                onClick={closeModal}
-              >
+              <button className="text-red-500 font-bold" onClick={closeModal}>
                 Close
               </button>
             </div>
