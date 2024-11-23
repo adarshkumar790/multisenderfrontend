@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { FaCrown, FaEthereum, FaCoins, FaFileCsv } from "react-icons/fa"; // Import additional icons
-import Image from "next/image"; // For MetaMask logo
+import { FaCrown, FaEthereum, FaCoins, FaFileCsv } from "react-icons/fa"; 
+import Image from "next/image"; 
 import Web3 from "web3";
 import Link from "next/link";
 
@@ -9,10 +9,10 @@ export default function Home() {
   const [csvFile, setCsvFile] = useState(null);
   const [csvText, setCsvText] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [status, setStatus] = useState(1); // 1: Prepare, 2: Approve, 3: Multisend
+  const [status, setStatus] = useState(1); 
   const [walletAddress, setWalletAddress] = useState("");
   const [ethBalance, setEthBalance] = useState("");
-  const [csvError, setCsvError] = useState(false); // State to track if there are validation errors
+  const [csvError, setCsvError] = useState(false); 
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -20,8 +20,8 @@ export default function Home() {
       setCsvFile(file);
       const reader = new FileReader();
       reader.onload = () => {
-        setCsvText(reader.result); // Read the CSV content and set it in the state
-        validateCsv(reader.result); // Validate CSV content after loading
+        setCsvText(reader.result); 
+        validateCsv(reader.result); 
       };
       reader.readAsText(file);
     } else {
@@ -32,17 +32,17 @@ export default function Home() {
   const handleCsvTextChange = (event) => {
     const value = event.target.value;
     setCsvText(value);
-    validateCsv(value); // Validate CSV content when user types in the field
+    validateCsv(value); 
   };
 
   const validateCsv = (csvData) => {
     const lines = csvData.split("\n");
     const isValid = lines.every(line => {
       const [address] = line.split(",").map(item => item.trim());
-      return address && address.length === 42; // Check if address length is exactly 42 (for Ethereum addresses)
+      return address && address.length === 42;
     });
 
-    setCsvError(!isValid); // Set error state based on validation result
+    setCsvError(!isValid); 
   };
 
   const getLineNumbers = () => {
@@ -73,9 +73,7 @@ export default function Home() {
     return { valid, invalid };
   };
 
-  // const handleContinue = () => {
-  //   <Link href="/home">
-  // };
+  
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== "undefined") {
@@ -105,9 +103,9 @@ export default function Home() {
   const { valid, invalid } = parseCsv();
 
   return (
-    <div className="min-h-screen bg-slate-800 text-white flex flex-col items-center">
+    <div className="min-h-screen bg-[#1e293b] text-white flex flex-col items-center">
       
-      <main className="flex flex-col items-center mt-10 w-full max-w-2xl bg-[#0F123D] rounded-2xl shadow-lg p-6">
+      <main className="flex flex-col items-center mt-10 w-full max-w-2xl bg-[#1e293b] rounded-2xl shadow-lg p-6">
         <div className="flex items-center gap-2 mb-6">
           <div
             className={`flex items-center gap-2 ${
