@@ -185,6 +185,7 @@ export default function Home() {
                 }`}
                 value={csvText}
                 onChange={handleCsvTextChange}
+                
               />
             </div>
             <div className="absolute right-2 bottom-[-1rem]">
@@ -194,6 +195,7 @@ export default function Home() {
                 onChange={handleFileUpload}
                 className="hidden"
                 id="uploadCSV"
+                required
               />
               <label
                 htmlFor="uploadCSV"
